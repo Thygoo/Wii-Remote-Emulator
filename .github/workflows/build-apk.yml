@@ -36,8 +36,15 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Build debug APK
-        run: gradle --no-daemon :app:assembleDebug
+
+      - name: Prepare v0.3 Android sources
+        run: |
+          cp MainActivity.kt app/src/main/java/org/example/wiiremote/MainActivity.kt
+          cp WiiHidSession.kt app/src/main/java/org/example/wiiremote/WiiHidSession.kt
+          cp AndroidManifest.xml app/src/main/AndroidManifest.xml
+          sed -i 's/versionCode = 2/versionCode = 3/' app/build.gradle.kts
+          sed -i 's/versionName = "0.2"/versionName = "0.3"/' app/build.gradle.kts
+
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
