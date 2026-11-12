@@ -80,7 +80,7 @@ class MainActivity : Activity() {
         setContentView(screen)
 
         root.addView(TextView(this).apply {
-            text = "Wii Remote HID Lab v0.3 — Windows HID Diagnostics"
+            text = "Wii Remote HID Lab v0.4 — Windows Gamepad Test"
             textSize = 19f
         })
         root.addView(TextView(this).apply {
@@ -90,7 +90,7 @@ class MainActivity : Activity() {
         })
 
         root.addView(Button(this).apply {
-            text = "SYNC — experimental Wii U discovery"
+            text = "REGISTER & DISCOVER WINDOWS GAMEPAD"
             setOnClickListener { onSyncTapped() }
         })
         syncStatus = TextView(this).apply { text = "Status: Ready"; textSize = 15f }
@@ -136,7 +136,7 @@ class MainActivity : Activity() {
         })
 
         root.addView(TextView(this).apply {
-            text = "Touch buttons (report IDs 0x30/0x31; only sent if HID host CONNECTED)"
+            text = "Windows gamepad: A/B/1/2/-/+/HOME = buttons 1–7; directions = X/Y axes"
             setPadding(0, dp(8), 0, 0)
         })
         val rows = listOf(

@@ -84,6 +84,7 @@ class WiiHidSession(
             log("GET_REPORT type=${type.toInt() and 0xFF}, id=0x${id.hex()}, size=$bufferSize")
             if (device == null) return
             val payload = when (id.toInt() and 0xFF) {
+                WindowsGamepad.REPORT_ID -> WindowsGamepad.report(currentButtons)
                 0x20 -> WiiReportCodec.status(currentButtons, leds)
                 0x30 -> WiiReportCodec.buttons(currentButtons)
                 0x31 -> WiiReportCodec.buttonsAndNeutralAccel(currentButtons)
@@ -179,8 +180,8 @@ class WiiHidSession(
         val deviceProfile = hid ?: return
         if (registered || registering || !wanted) return
         val sdp = BluetoothHidDeviceAppSdpSettings(
-            "Wii Remote HID Lab", "Experimental HID report probe", "Open prototype",
-            0x00.toByte(), WiiHidDescriptor.bytes
+            "Wii Remote HID Lab Gamepad", "Windows gamepad and HID report probe", "Open prototype",
+            0x08.toByte(), WiiHidDescriptor.bytes
         )
         registering = true
         val accepted = try {
@@ -297,6 +298,8 @@ class WiiHidSession(
     private fun sendButtons() {
         val device = host ?: return
         val service = hid ?: return
+        val gamepadQueued = service.sendReport(device, WindowsGamepad.REPORT_ID, WindowsGamepad.report(currentButtons))
+        log("Gamepad report 1: queued=$gamepadQueued")
         val payload = if (reportMode == WiiReportCodec.REPORT_BUTTONS_ACCEL)
             WiiReportCodec.buttonsAndNeutralAccel(currentButtons)
         else WiiReportCodec.buttons(currentButtons)
