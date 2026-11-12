@@ -1,23 +1,5 @@
+
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-}
-
-android {
-    namespace = "org.example.wiiremote"
-    compileSdk = 35
-
-    defaultConfig {
-        applicationId = "org.example.wiiremote"
-        minSdk = 28
-        targetSdk = 35
-        versionCode = 3
-        versionName = "0.3"
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlinOptions { jvmTarget = "17" }
+    id("com.android.application") version "8.7.3" apply false
+    id("org.jetbrains.kotlin.android") version "2.0.21" apply false
 }
