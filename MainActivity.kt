@@ -76,7 +76,7 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(14), dp(12), dp(14), dp(24))
         }
-        val screen = ScrollView(this).apply { fillViewport = true; addView(root) }
+        val screen = ScrollView(this).apply { isFillViewport = true; addView(root) }
         setContentView(screen)
 
         root.addView(TextView(this).apply {
