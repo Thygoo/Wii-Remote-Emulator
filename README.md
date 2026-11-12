@@ -1,59 +1,55 @@
-# Wii Remote HID Lab v0.2 (Android-only feasibility prototype)
+# Wii Remote HID Lab v0.3 — Android-only Bluetooth HID diagnostics
 
-**Status:** Experimental / NOT verified to pair with an unmodified Nintendo Wii U. The demo is not a finished Wii Remote emulator. No root or external adapter is needed to build/run the Android side.
+**Status:** Experimental. This source is NOT a completed Nintendo Wii Remote emulator. Windows HID connection is untested and connection to an unmodified Wii U is not established.
 
-## Purpose
+## Changes from 0.2
 
-1. Register an Android Bluetooth Classic HID Device using public `BluetoothHidDevice` API (Android 9 / API 28+).
-2. Provide an experimental **SYNC** button that requests Bluetooth permissions, enables Bluetooth (with user consent), registers Android HID Device, then requests 120 seconds of discoverability.
-3. Observe app registration and incoming HID-host connection callbacks.
-4. Generate correctly encoded Wii Remote basic button reports (input report 0x30, two data bytes).
-5. Log any HID output requests from a host; minimally respond to LED, report-mode, and status commands.
-6. Determine whether an **unmodded Wii U will discover, pair, and connect** to the phone. This is the critical unknown.
+- Added **Refresh paired devices** selector, with separate **Connect HID to selected paired PC** and disconnect actions.
+- Added Bluetooth registration, connected HID host, scan/discoverability mode, and Bluetooth adapter name diagnostics.
+- Added bond-state and Bluetooth ACL event logging (ACL != HID).
+- Added `BluetoothHidDevice.connect(device)` for hosts already paired using the Android Bluetooth settings.
+- Fixed the stuck `HID setup already requested; registered=false` state by allowing `registerApp()` again with an existing profile proxy.
+- Added a single guarded foreground re-registration attempt after unexpected HID unregister. This is not a background service.
+- Logs distinguish request accepted from actual `Host connection state: 2` confirmation.
+- Kept the existing experimental Nintendo-style 0x30/0x31 report payloads and generic HID descriptor for comparison with v0.2.
 
-## Major compatibility limits
+## Limitations and warnings
 
-- The virtual **SYNC** button is **not** a real Nintendo Wii Remote SYNC event. It can only start Android HID registration and standard Bluetooth discoverability. It cannot override the Wii U's pairing requirements.
-- The genuine Wii Remote uses special legacy Bluetooth pairing, SDP/identity details, and complex proprietary reports. The Android public HID Device APIs do not expose control of every parameter required to impersonate one.
-- The prototype's vendor-defined HID report descriptor is intentionally **not a byte-for-byte Wii Remote descriptor**. It may pair with normal HID hosts but **may never be detected by the Wii U**.
-- Motion, IR pointing, Nunchuk, Bluetooth legacy PIN handling, memory/EEPROM, real rumble, extension authentication, and power operations are not implemented.
-- The provisional 0x31 report contains placeholder accelerometer bytes only; these are not calibrated or real sensor data.
-- Registering HID disables Android's Bluetooth HID Host role until the app unregisters it; stay foreground while testing.
-- Some devices/ROMs may not expose the HID Device profile at all.
+- `connect()` works only with *already paired* Bluetooth hosts and is only a request; `onConnectionStateChanged(... STATE_CONNECTED)` is the actual success signal.
+- Windows can pair with Android for other phone services without connecting to this app's HID Device service.
+- Current HID descriptor is **vendor-defined**, not a standard Windows gamepad descriptor. It might not appear in `joy.cpl` even when the HID connection succeeds.
+- Android may unregister HID when the app leaves the foreground. Keep the app visible. The one-off recovery is opportunistic and never defeats Android OS restrictions.
+- This app does **not** implement full Wii Remote Bluetooth identity, legacy pairing PIN, genuine Nintendo SDP record, MotionPlus, IR, Nunchuk, or other protocols necessary for stock Wii U compatibility.
+- No root required. Android API 28+ and Bluetooth Classic HID Device support required. Android 12+ also needs Nearby Devices permissions (Connect, Advertise, Scan).
 
-## Build
+## Test on Android / Windows
 
-- Open this folder as a Gradle project in Android Studio (JDK 17, Android SDK 35).
-- AGP 8.7.3 / Kotlin 2.0.21 / Gradle 8.9 are intended; there is **no Gradle wrapper in this archive**. Use Android Studio's Gradle installation or generate a wrapper with Gradle 8.9 (`gradle wrapper --gradle-version 8.9`) before CLI builds.
-- Run on an Android device API 28+; approve Bluetooth Connect and Advertise permissions.
-- This package was source-reviewed and unit-tested for its independent report codec but was **not built as an APK** in this environment (Android SDK/Gradle unavailable).
+1. Build with GitHub Actions and install the debug APK.
+2. On Android, make sure Windows appears in **Settings → Connected devices → Previously connected devices**. Pair in system settings if necessary.
+3. Open v0.3 and grant **Nearby Devices** permissions.
+4. Press **Register / recover HID device**. Look for `HID registration: true`.
+5. Press **Refresh paired devices**, select your Windows PC, then **CONNECT HID TO SELECTED PAIRED PC**.
+6. Read the event log: `connect() request accepted: true` is *not* a confirmed connection. `Host connection state: 2 (CONNECTED)` is success.
+7. If Windows only shows a connected phone and no HID connection callback, the problem is HID service negotiation or host-side permissions, not plain Bluetooth discovery.
+8. If Android loses HID registration, bring the app foreground and press **Register / recover HID device** again.
 
-## Test order
+## Build configuration
 
-1. Turn on the Wii U, press the **physical SYNC button** on the front of the console until the **Wii Remote pairing** screen appears (not the separate Wii U GamePad pairing screen).
-2. Launch the app and tap **SYNC — attempt pairing with Wii U**. Grant Android permissions and allow Bluetooth visibility when prompted. This is a one-button flow but may need system confirmations.
-3. Watch the in-app status and log: `HID Device profile available`, `HID registration: true`, then `Android discoverable for 120 seconds`.
-4. If a Bluetooth HID host connects, the status shows `Host connection state: 2` (connected). This alone does **not** prove Wii Remote emulation.
-5. First test with a standard Bluetooth HID host (Linux/Windows) if the Wii U does not connect. That checks Android HID support independently.
-6. If the Wii U never opens a connection, the problem is likely low-level Bluetooth identity/legacy pairing and will not be solved simply by adding more touch buttons.
-
-## What to look for in Logcat
-
-- `registerApp()` queued vs `onAppStatusChanged(..., true)` actual registration
-- `onConnectionStateChanged(..., STATE_CONNECTED)`
-- `OUTPUT 0x12` requests report mode
-- `OUTPUT 0x15` status request
+- Gradle 8.9, Java 17, AGP 8.7.3, Kotlin 2.0.21, Android SDK 35.
+- `app/build.gradle.kts`: versionCode 3, versionName 0.3; same applicationId as v0.2.
+- `.github/workflows/build-apk.yml`: tested SDK setup structure with `android-actions/setup-android@v4`, `sdkmanager`, and Gradle `:app:assembleDebug`.
+- The debug APK is only created by the GitHub Actions workflow. The source was not compiled in the offline packaging environment, so a compile error may need correction.
+- Debug APKs from different GitHub runners may use different signing keys; upgrading over an older debug APK may be rejected. Uninstall the old version first if necessary (this clears the app data).
 
 ## Code map
 
-- `MainActivity.kt` = touchscreen, one-button experimental SYNC workflow, user permissions, Bluetooth enable and discoverable requests, status/log
-- `WiiHidSession.kt` = Bluetooth profile, HID callbacks, report commands
-- `WiiHidDescriptor.kt` = minimal generic vendor-defined HID descriptor
-- `WiiReportCodec.kt` = Wii button bitfield and report payload encoder
+- `MainActivity.kt` – Android touchscreen, paired device picker, sync and diagnostics UI, broadcast event logs.
+- `WiiHidSession.kt` – HID Device registration, recovery, manual host connect, callbacks, report sending.
+- `WiiHidDescriptor.kt` – generic vendor-defined descriptor (unchanged).
+- `WiiReportCodec.kt` – basic Wii-style input report payloads (unchanged).
 
-## References
+## Android API references
 
 - https://developer.android.com/reference/android/bluetooth/BluetoothHidDevice
-- https://developer.android.com/reference/android/bluetooth/BluetoothHidDeviceAppSdpSettings
-- https://www.wiibrew.org/wiki/Wii_Remote
-- https://en-americas-support.nintendo.com/app/answers/detail/a_id/1133/p/603
+- https://developer.android.com/reference/android/bluetooth/BluetoothAdapter
+- https://developer.android.com/reference/android/bluetooth/BluetoothDevice

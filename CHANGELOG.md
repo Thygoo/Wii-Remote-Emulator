@@ -1,11 +1,12 @@
 # Changelog
 
-## v0.2 — Experimental on-screen SYNC workflow
+## v0.3
+- Added paired Bluetooth device selector and an explicit HID connect attempt to a selected, previously bonded Windows PC.
+- Added HID host state, Bluetooth adapter name, actual scan mode, ACL events and bond-state logs.
+- Fixed v0.2's stale `HID setup already requested; registered=false` path.
+- Added foreground-only limited HID re-registration after unexpected unregister.
+- Separated pairing/discoverability, HID registration, connect request and confirmed `STATE_CONNECTED` in UI/logs.
+- Increased versionCode to 3 and declared Android 12+ Bluetooth Scan permission for scan mode diagnostics.
 
-- Added large **SYNC — attempt pairing with Wii U** button.
-- One press starts an Android standard Bluetooth pairing *attempt*: requests nearby-device permissions, prompts to enable Bluetooth if disabled, registers the HID Device profile, then asks Android to become discoverable for 120 seconds.
-- Added explicit status text and session logs. The app does not claim paired status when only discoverability succeeds.
-- Added automatic permission-result handling, so tapping SYNC once resumes after granting permissions.
-- Retained separate HID registration/discoverability diagnostic controls and touch buttons.
-
-**Limitation:** This workflow is not equivalent to the hardware Wii Remote SYNC button. Android public HID Device APIs cannot guarantee real Wii Remote Bluetooth identity or pairing with an unmodified Wii U.
+## v0.2
+- Experimental SYNC registration and discoverability workflow.
