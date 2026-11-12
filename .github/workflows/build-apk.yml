@@ -46,6 +46,10 @@ jobs:
           sed -i 's/versionName = "0.2"/versionName = "0.3"/' app/build.gradle.kts
 
 
+      - name: Build debug APK
+        run: gradle --no-daemon :app:assembleDebug
+
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
